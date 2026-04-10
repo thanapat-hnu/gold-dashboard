@@ -103,7 +103,7 @@ async function loadThaiGold() {
     document.getElementById('update-time').textContent = `อัปเดต ${time}`;
     document.getElementById('footer-time').textContent = `ข้อมูลทองไทย: ${time}`;
   } catch(e) {
-    document.getElementById('thai-gold-card').innerHTML = '<div class="loading">ไม่สามารถโหลดข้อมูลได้</div>';
+    document.getElementById('thai-gold-card').innerHTML = `<div class="loading">Error: ${e.message}</div>`;
   }
 }
 
