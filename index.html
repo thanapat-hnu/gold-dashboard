@@ -84,19 +84,19 @@ async function loadThaiGold() {
     document.getElementById('thai-gold-card').innerHTML = `
       <div class="price-row">
         <span class="price-label">ทองรูปพรรณ รับซื้อ</span>
-        <span class="price-value">${Number(gold.buy).toLocaleString()} ฿</span>
+        <span class="price-value">${gold.buy} ฿</span>
       </div>
       <div class="price-row">
         <span class="price-label">ทองรูปพรรณ ขาย</span>
-        <span class="price-value">${Number(gold.sell).toLocaleString()} ฿</span>
+        <span class="price-value">${gold.sell} ฿</span>
       </div>
       <div class="price-row">
         <span class="price-label">ทองแท่ง รับซื้อ</span>
-        <span class="price-value">${Number(bar.buy).toLocaleString()} ฿</span>
+        <span class="price-value">${bar.buy} ฿</span>
       </div>
       <div class="price-row">
         <span class="price-label">ทองแท่ง ขาย</span>
-        <span class="price-value">${Number(bar.sell).toLocaleString()} ฿</span>
+        <span class="price-value">${bar.sell} ฿</span>
       </div>
     `;
     currentSellPrice = Number(gold.sell.replace(/,/g, ''));
