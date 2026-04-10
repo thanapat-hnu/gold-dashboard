@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gold Dashboard</title>
+  <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Sarabun', sans-serif; background: #f5f5f5; }
+    .header { background: linear-gradient(135deg, #FFD700, #FFA500); padding: 20px; text-align: center; color: white; }
+    .header h1 { font-size: 22px; font-weight: bold; }
+    .header p { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .card { background: white; margin: 12px; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card-title { font-size: 13px; color: #888; margin-bottom: 10px; }
+    .price-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+    .price-row:last-child { border-bottom: none; }
+    .price-label { font-size: 14px; color: #333; }
+    .price-value { font-size: 16px; font-weight: bold; color: #E65100; }
+    .price-value.world { color: #1565C0; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+    .badge.up { background: #E8F5E9; color: #2E7D32; }
+    .badge.down { background: #FFEBEE; color: #C62828; }
+    .section-title { font-size: 16px; font-weight: bold; color: #333; margin: 16px 12px 4px; }
+    .calc-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 10px; }
+    .calc-btn { width: 100%; padding: 12px; background: #FFD700; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: #333; cursor: pointer; }
+    .calc-result { margin-top: 12px; padding: 12px; background: #FFF9E6; border-radius: 8px; display: none; }
+    .calc-result .result-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+    .calc-result .profit { font-size: 18px; font-weight: bold; text-align: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid #FFD700; }
+    .profit.positive { color: #2E7D32; }
+    .profit.negative { color: #C62828; }
+    .update-time { text-align: center; font-size: 11px; color: #aaa; margin: 8px 0 20px; }
+    .loading { text-align: center; padding: 40px; color: #aaa; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Gold Dashboard</h1>
+  <p id="update-time">กำลังโหลดข้อมูล...</p>
+</div>
+
+<!-- ราคาทองไทย -->
+<p class="section-title">ทองไทย</p>
+<div class="card" id="thai-gold-card">
+  <div class="loading">กำลังดึงข้อมูล...</div>
+</div>
+
+<!-- ราคาทองโลก -->
+<p class="section-title">ทองโลก</p>
+<div class="card" id="world-gold-card">
+  <div class="loading">กำลังดึงข้อมูล...</div>
+</div>
+
+<!-- คำนวณกำไร -->
+<p class="section-title">คำนวณกำไร/ขาดทุน</p>
+<div class="card">
+  <div class="card-title">ใส่ราคาทองที่ซื้อมา (บาท/บาททอง)</div>
+  <input type="number" class="calc-input" id="buy-price" placeholder="เช่น 70000">
+  <div class="card-title">จำนวนที่ซื้อ (บาททอง)</div>
+  <input type="number" class="calc-input" id="amount" placeholder="เช่น 1" value="1">
+  <button class="calc-btn" onclick="calculate()">คำนวณกำไร/ขาดทุน</button>
+  <div class="calc-result" id="calc-result">
+    <div class="result-row"><span>ราคาที่ซื้อ</span><span id="r-buy"></span></div>
+    <div class="result-row"><span>ราคาปัจจุบัน</span><span id="r-now"></span></div>
+    <div class="result-row"><span>จำนวน</span><span id="r-amount"></span></div>
+    <div class="profit" id="r-profit"></div>
+  </div>
+</div>
+
+<div class="update-time" id="footer-time"></div>
+
+<script>
+let currentSellPrice = 0;
+
+async function loadThaiGold() {
+  try {
+    const res = await fetch('https://api.chnwt.dev/thai-gold-api/latest');
+    const data = await res.json();
+    const gold = data.response.price.gold;
+    const bar = data.response.price.gold_bar;
+    const time = data.response.update_time;
+
+    document.getElementById('thai-gold-card').innerHTML = `
+      <div class="price-row">
+        <span class="price-label">ทองรูปพรรณ รับซื้อ</span>
+        <span class="price-value">${Number(gold.buy).toLocaleString()} ฿</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">ทองรูปพรรณ ขาย</span>
+        <span class="price-value">${Number(gold.sell).toLocaleString()} ฿</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">ทองแท่ง รับซื้อ</span>
+        <span class="price-value">${Number(bar.buy).toLocaleString()} ฿</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">ทองแท่ง ขาย</span>
+        <span class="price-value">${Number(bar.sell).toLocaleString()} ฿</span>
+      </div>
+    `;
+    currentSellPrice = Number(gold.sell.replace(/,/g, ''));
+    document.getElementById('update-time').textContent = `อัปเดต ${time}`;
+    document.getElementById('footer-time').textContent = `ข้อมูลทองไทย: ${time}`;
+  } catch(e) {
+    document.getElementById('thai-gold-card').innerHTML = '<div class="loading">ไม่สามารถโหลดข้อมูลได้</div>';
+  }
+}
+
+async function loadWorldGold() {
+  try {
+    const res = await fetch('https://www.goldapi.io/api/XAU/USD', {
+      headers: { 'x-access-token': 'goldapi-1feasmns3bfmt-io' }
+    });
+    const data = await res.json();
+    const change = data.chp >= 0 ? 'up' : 'down';
+    const changeText = data.chp >= 0 ? `+${data.chp}%` : `${data.chp}%`;
+
+    document.getElementById('world-gold-card').innerHTML = `
+      <div class="price-row">
+        <span class="price-label">ราคาทองโลก</span>
+        <span class="price-value world">$${data.price.toLocaleString()}/oz <span class="badge ${change}">${changeText}</span></span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">ราคาต่อกรัม (24K)</span>
+        <span class="price-value world">$${data.price_gram_24k.toFixed(2)}</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">สูงสุดวันนี้</span>
+        <span class="price-value world">$${data.high_price.toLocaleString()}</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">ต่ำสุดวันนี้</span>
+        <span class="price-value world">$${data.low_price.toLocaleString()}</span>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('world-gold-card').innerHTML = '<div class="loading">ไม่สามารถโหลดข้อมูลได้</div>';
+  }
+}
+
+function calculate() {
+  const buyPrice = Number(document.getElementById('buy-price').value);
+  const amount = Number(document.getElementById('amount').value);
+  if (!buyPrice || !currentSellPrice) return;
+
+  const totalBuy = buyPrice * amount;
+  const totalNow = currentSellPrice * amount;
+  const profit = totalNow - totalBuy;
+  const profitPct = ((profit / totalBuy) * 100).toFixed(2);
+
+  document.getElementById('r-buy').textContent = `${totalBuy.toLocaleString()} ฿`;
+  document.getElementById('r-now').textContent = `${totalNow.toLocaleString()} ฿`;
+  document.getElementById('r-amount').textContent = `${amount} บาททอง`;
+
+  const profitEl = document.getElementById('r-profit');
+  profitEl.className = `profit ${profit >= 0 ? 'positive' : 'negative'}`;
+  profitEl.textContent = `${profit >= 0 ? 'กำไร' : 'ขาดทุน'} ${Math.abs(profit).toLocaleString()} ฿ (${profit >= 0 ? '+' : ''}${profitPct}%)`;
+
+  document.getElementById('calc-result').style.display = 'block';
+}
+
+loadThaiGold();
+loadWorldGold();
+</script>
+</body>
+</html>
