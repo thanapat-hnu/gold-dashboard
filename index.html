@@ -160,8 +160,18 @@ function calculate() {
   document.getElementById('calc-result').style.display = 'block';
 }
 
-loadThaiGold();
-loadWorldGold();
+async function initLiff() {
+  try {
+    await liff.init({ liffId: '2009761090-RwDlH5en' });
+  } catch (e) {
+    console.log('LIFF init failed, running in browser mode');
+  }
+  loadThaiGold();
+  loadWorldGold();
+}
+
+initLiff();
+  
 </script>
 </body>
 </html>
